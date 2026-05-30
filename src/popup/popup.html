@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="popup.css">
+  <title>NoPasskey</title>
+</head>
+<body>
+  <h1>NoPasskey</h1>
+  <p id="site" class="site">…</p>
+
+  <label class="row">
+    <input type="checkbox" id="allowSite">
+    <span>Allow passkeys on this site</span>
+  </label>
+
+  <label class="row">
+    <input type="checkbox" id="enabled">
+    <span>Block passkey registration (all sites)</span>
+  </label>
+
+  <p id="status" class="status"></p>
+
+  <button id="options" class="link">Manage allowlist &amp; settings</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>

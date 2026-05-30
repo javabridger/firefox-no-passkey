@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="NoPasskey">
+  <rect width="128" height="128" rx="26" fill="#1f2933"/>
+  <g fill="none" stroke="#e4e7eb" stroke-width="8" stroke-linecap="round">
+    <circle cx="50" cy="52" r="20"/>
+    <path d="M50 72 v34 M50 92 h16 M50 100 h12"/>
+  </g>
+  <line x1="28" y1="28" x2="100" y2="100" stroke="#b60205" stroke-width="11" stroke-linecap="round"/>
+</svg>

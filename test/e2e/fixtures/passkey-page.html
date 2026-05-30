@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>NoPasskey E2E fixture</title>
+</head>
+<body>
+  <h1>NoPasskey E2E fixture</h1>
+  <p id="origin"></p>
+  <button id="create">Create passkey</button>
+  <button id="login">Login with passkey</button>
+  <pre id="createResult">create: idle</pre>
+  <pre id="loginResult">login: idle</pre>
+
+  <script>
+    document.getElementById('origin').textContent = location.origin;
+
+    const publicKeyCreate = {
+      challenge: new Uint8Array([1, 2, 3, 4]),
+      rp: { name: 'NoPasskey Test' },
+      user: { id: new Uint8Array([1, 2, 3, 4]), name: 'test@example.com', displayName: 'Test' },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+      timeout: 1500,
+    };
+
+    const publicKeyGet = {
+      challenge: new Uint8Array([5, 6, 7, 8]),
+      timeout: 1500,
+    };
+
+    async function runCreate() {
+      const el = document.getElementById('createResult');
+      el.textContent = 'create: pending';
+      try {
+        await navigator.credentials.create({ publicKey: publicKeyCreate });
+        el.textContent = 'create: resolved';
+      } catch (e) {
+        el.textContent = 'create: rejected:' + e.name;
+      }
+    }
+
+    async function runGet() {
+      const el = document.getElementById('loginResult');
+      el.textContent = 'login: pending';
+      try {
+        await navigator.credentials.get({ publicKey: publicKeyGet });
+        el.textContent = 'login: resolved';
+      } catch (e) {
+        el.textContent = 'login: rejected:' + e.name;
+      }
+    }
+
+    document.getElementById('create').addEventListener('click', runCreate);
+    document.getElementById('login').addEventListener('click', runGet);
+  </script>
+</body>
+</html>

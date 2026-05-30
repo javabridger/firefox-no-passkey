@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="options.css">
+  <title>NoPasskey settings</title>
+</head>
+<body>
+  <h1>NoPasskey settings</h1>
+
+  <section>
+    <label class="row">
+      <input type="checkbox" id="enabled">
+      <span>Block passkey registration by default (recommended)</span>
+    </label>
+    <label class="row">
+      <input type="checkbox" id="showToast">
+      <span>Show a toast when a registration is blocked</span>
+    </label>
+    <p class="hint">Logging in with passkeys you already have is never blocked &mdash; only
+      <em>creating new</em> passkeys is.</p>
+  </section>
+
+  <section>
+    <h2>Allowlist</h2>
+    <p class="hint">Passkey registration is permitted on these origins.</p>
+    <form id="addForm" class="add">
+      <input type="text" id="addInput" placeholder="https://example.com" autocomplete="off">
+      <button type="submit">Add</button>
+    </form>
+    <ul id="list" class="list"></ul>
+    <p id="empty" class="hint">No sites allowlisted yet.</p>
+  </section>
+
+  <script src="options.js"></script>
+</body>
+</html>

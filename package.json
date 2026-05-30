@@ -1,0 +1,19 @@
+{
+  "name": "nopasskey",
+  "version": "0.1.0",
+  "description": "Firefox extension that blocks new passkey (WebAuthn) registration by default, with a per-site allowlist.",
+  "private": true,
+  "scripts": {
+    "test": "cucumber-js --profile unit",
+    "test:e2e": "cucumber-js --profile e2e",
+    "lint": "web-ext lint --source-dir src",
+    "build": "web-ext build --source-dir src --overwrite-dest",
+    "start": "web-ext run --source-dir src",
+    "sign": "web-ext sign --source-dir src"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.2.0",
+    "selenium-webdriver": "^4.28.0",
+    "web-ext": "^8.3.0"
+  }
+}
