@@ -3,35 +3,79 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="options.css">
+  <link rel="stylesheet" href="../ui.css">
   <title>NoPasskey settings</title>
 </head>
 <body>
-  <h1>NoPasskey settings</h1>
+  <div class="np setB">
+    <header class="setB__head">
+      <span class="setB__mark">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2.5l7 2.6v5.4c0 4.6-3 7.8-7 9.1-4-1.3-7-4.5-7-9.1V5.1l7-2.6z"/>
+          <circle cx="12" cy="10.2" r="1.9"/>
+          <path d="M12 12.1v3.1"/>
+        </svg>
+      </span>
+      <div class="setB__headtext">
+        <h1>NoPasskey settings</h1>
+        <p>Block sites from registering or signing in with passkeys.</p>
+      </div>
+    </header>
 
-  <section>
-    <label class="row">
-      <input type="checkbox" id="enabled">
-      <span>Block passkey registration by default (recommended)</span>
-    </label>
-    <label class="row">
-      <input type="checkbox" id="showToast">
-      <span>Show a toast when a registration is blocked</span>
-    </label>
-    <p class="hint">Logging in with passkeys you already have is never blocked &mdash; only
-      <em>creating new</em> passkeys is.</p>
-  </section>
+    <div class="cardB cardB--pad">
+      <label class="rowB rowB--lg">
+        <span class="rowB__text">
+          <span class="rowB__label">Block passkey registration by default</span>
+          <span class="rowB__sub">Recommended · stops new passkeys being created</span>
+        </span>
+        <span class="sw">
+          <input type="checkbox" id="blockCreate">
+          <span class="sw__track"><span class="sw__knob"></span></span>
+        </span>
+      </label>
+      <div class="cardB__div"></div>
+      <label class="rowB rowB--lg">
+        <span class="rowB__text">
+          <span class="rowB__label">Block passkey login by default</span>
+          <span class="rowB__sub">Stops existing passkeys from signing you in</span>
+        </span>
+        <span class="sw">
+          <input type="checkbox" id="blockGet">
+          <span class="sw__track"><span class="sw__knob"></span></span>
+        </span>
+      </label>
+      <div class="cardB__div"></div>
+      <label class="rowB rowB--lg">
+        <span class="rowB__text">
+          <span class="rowB__label">Show a toast when something is blocked</span>
+        </span>
+        <span class="sw">
+          <input type="checkbox" id="showToast">
+          <span class="sw__track"><span class="sw__knob"></span></span>
+        </span>
+      </label>
+    </div>
+    <p class="setB__note">
+      Registration blocking stops new passkeys from being created. Login blocking also prevents
+      passkeys you already have from signing you in — turn it off if you still log in with passkeys.
+    </p>
 
-  <section>
-    <h2>Allowlist</h2>
-    <p class="hint">Passkey registration is permitted on these origins.</p>
-    <form id="addForm" class="add">
-      <input type="text" id="addInput" placeholder="https://example.com" autocomplete="off">
-      <button type="submit">Add</button>
-    </form>
-    <ul id="list" class="list"></ul>
-    <p id="empty" class="hint">No sites allowlisted yet.</p>
-  </section>
+    <div class="setB__sectionhead">
+      <h2>Allowlist</h2>
+      <span class="setB__count" id="count">0 origins</span>
+    </div>
+    <p class="setB__sub">Passkeys are fully permitted on these origins.</p>
+
+    <div class="cardB cardB--pad">
+      <form class="setB__add" id="addForm">
+        <input class="field" id="addInput" type="text" placeholder="https://example.com" autocomplete="off">
+        <button class="btn btn--primary" type="submit">Add</button>
+      </form>
+      <ul class="setB__origins" id="list"></ul>
+      <p class="setB__empty" id="empty">No sites allowlisted yet.</p>
+    </div>
+  </div>
 
   <script src="options.js"></script>
 </body>

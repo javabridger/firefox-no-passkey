@@ -3,26 +3,65 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="../ui.css">
   <title>NoPasskey</title>
 </head>
 <body>
-  <h1>NoPasskey</h1>
-  <p id="site" class="site">…</p>
+  <div class="np popB">
+    <div class="popB__head">
+      <span class="popB__mark">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2.5l7 2.6v5.4c0 4.6-3 7.8-7 9.1-4-1.3-7-4.5-7-9.1V5.1l7-2.6z"/>
+          <circle cx="12" cy="10.2" r="1.9"/>
+          <path d="M12 12.1v3.1"/>
+        </svg>
+      </span>
+      <span class="popB__title">NoPasskey</span>
+    </div>
 
-  <label class="row">
-    <input type="checkbox" id="allowSite">
-    <span>Allow passkeys on this site</span>
-  </label>
+    <div class="popB__status" id="status">
+      <span class="dot dot--on" id="statusDot"></span>
+      <span class="popB__statustext" id="statusText"></span>
+    </div>
 
-  <label class="row">
-    <input type="checkbox" id="enabled">
-    <span>Block passkey registration (all sites)</span>
-  </label>
+    <div class="cardB">
+      <label class="rowB" id="allowRow">
+        <span class="rowB__text">
+          <span class="rowB__label">Allow passkeys on this site</span>
+          <span class="rowB__sub" id="allowSub">Override blocking for this site</span>
+        </span>
+        <span class="sw">
+          <input type="checkbox" id="allowSite">
+          <span class="sw__track"><span class="sw__knob"></span></span>
+        </span>
+      </label>
+      <div class="cardB__div"></div>
+      <label class="rowB">
+        <span class="rowB__text">
+          <span class="rowB__label">Block registration</span>
+          <span class="rowB__sub">Creating new passkeys · all sites</span>
+        </span>
+        <span class="sw">
+          <input type="checkbox" id="blockCreate">
+          <span class="sw__track"><span class="sw__knob"></span></span>
+        </span>
+      </label>
+      <div class="cardB__div"></div>
+      <label class="rowB">
+        <span class="rowB__text">
+          <span class="rowB__label">Block login</span>
+          <span class="rowB__sub">Signing in with passkeys · all sites</span>
+        </span>
+        <span class="sw">
+          <input type="checkbox" id="blockGet">
+          <span class="sw__track"><span class="sw__knob"></span></span>
+        </span>
+      </label>
+    </div>
 
-  <p id="status" class="status"></p>
-
-  <button id="options" class="link">Manage allowlist &amp; settings</button>
+    <button class="popB__foot" id="options">Manage allowlist &amp; settings →</button>
+  </div>
 
   <script src="popup.js"></script>
 </body>
