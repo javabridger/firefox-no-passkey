@@ -6,6 +6,7 @@ const { By, until } = require('selenium-webdriver');
 
 const TOAST = By.css('[data-nopasskey-toast]');
 const BUTTONS = { 'Create passkey': 'create', 'Login with passkey': 'login' };
+const RESULT_ELEMENT = { create: 'createResult', login: 'loginResult' };
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -41,11 +42,13 @@ When('I click "Allow this site" in the notification', async function () {
   await this.driver.wait(until.elementLocated(By.id('create')), 10000);
 });
 
-Then('the create call is rejected as {string}', async function (name) {
+Then('the {string} call is rejected as {string}', async function (op, name) {
+  const elementId = RESULT_ELEMENT[op];
+  assert.ok(elementId, `unknown operation: ${op}`);
   await this.driver.wait(async () => {
-    const text = await this.driver.findElement(By.id('createResult')).getText();
-    return text === `create: rejected:${name}`;
-  }, 10000, `create was not rejected as ${name}`);
+    const text = await this.driver.findElement(By.id(elementId)).getText();
+    return text === `${op}: rejected:${name}`;
+  }, 10000, `${op} was not rejected as ${name}`);
 });
 
 Then('a NoPasskey block notification appears', async function () {

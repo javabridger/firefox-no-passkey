@@ -6,7 +6,7 @@
  */
 'use strict';
 
-const DEFAULTS = { enabled: true, allowlist: [], showToast: true };
+const DEFAULTS = { blockCreate: true, blockGet: true, allowlist: [], showToast: true };
 const blockedCounts = new Map();
 
 async function storage() {

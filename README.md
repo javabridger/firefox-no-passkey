@@ -1,16 +1,16 @@
 # NoPasskey
 
-A Firefox (Manifest V3) extension that **blocks new passkey registration by default** while leaving
-ordinary logins alone. When a site calls `navigator.credentials.create({ publicKey })` to enrol a
-passkey, NoPasskey rejects it as if you'd cancelled the dialog (`NotAllowedError`), so the site falls
-back to password + 2FA. A non-blocking toast tells you it happened and offers **Allow this site**.
-Logging in with passkeys you already have (`navigator.credentials.get`) is **never** touched.
+A Firefox (Manifest V3) extension that **blocks passkey requests by default**. Both registration
+(`navigator.credentials.create({ publicKey })`) and login (`navigator.credentials.get({ publicKey })`)
+are blocked out of the box — each via its own toggle you can turn off independently. Blocked calls
+are rejected as if you'd cancelled the dialog (`NotAllowedError`), so sites fall back to password +
+2FA. A non-blocking toast tells you it happened and offers **Allow this site**.
 
 ## How it works
 
 - A content script in the page's **MAIN world** (natively supported since **Firefox 128**) runs at
-  `document_start` and wraps `navigator.credentials.create` before any page script can use it
-  ([src/interceptor.js](src/interceptor.js), [src/inject-main.js](src/inject-main.js)).
+  `document_start` and wraps `navigator.credentials.create` and `.get` before any page script can
+  use them ([src/interceptor.js](src/interceptor.js), [src/inject-main.js](src/inject-main.js)).
 - MAIN-world scripts can't use extension APIs, so an isolated **bridge** content script
   ([src/bridge.js](src/bridge.js)) answers each block/allow decision from storage, draws the toast,
   and asks the background page to update the toolbar badge.
@@ -29,20 +29,22 @@ pick [src/manifest.json](src/manifest.json).
 
 ## Using it
 
-- **Toolbar popup** — shows the current site, an *Allow passkeys on this site* toggle, a global
-  *Block passkey registration* switch, and a count badge of blocks on the page.
-- **Toast** — appears bottom-right when a registration is blocked; click **Allow this site** to
-  add the origin to the allowlist and reload.
-- **Options page** — manage the allowlist (add/remove origins), toggle blocking globally, and toggle
-  the toast.
+- **Toolbar popup** — shows the current site, an *Allow passkeys on this site* toggle, the two global
+  switches (*Block registration* / *Block login*), and a count badge of blocks on the page.
+- **Toast** — appears bottom-right when a request is blocked; click **Allow this site** to add the
+  origin to the allowlist and reload.
+- **Options page** — manage the allowlist (add/remove origins) and the *Block registration*,
+  *Block login*, and *Show toast* switches. Turn either block switch off to stop blocking that kind
+  of request; with both off, NoPasskey does nothing.
 
 Settings are stored in `storage.sync` (so the allowlist roams across your signed-in Firefox), with a
 `storage.local` fallback.
 
 ## Recommended settings & hardening
 
-- **Keep the defaults:** block everywhere, allowlist the handful of sites where you genuinely want a
-  passkey. This is the whole point of the extension.
+- **Keep the defaults:** block both registration and login everywhere, allowlist the handful of sites
+  where you genuinely want a passkey. If a site offers *only* passkey login and you get locked out,
+  add it to the allowlist (or turn *Block login* off) rather than disabling everything.
 - **Pair it with real 2FA:** a password manager plus TOTP or a hardware security key gives you the
   phishing resistance people cite for passkeys, without the lock-in you dislike.
 - **Nuclear option (no extension):** in `about:config`, the `security.webauth.webauthn*` prefs can
@@ -53,7 +55,6 @@ Settings are stored in `storage.sync` (so the allowlist roams across your signed
   `activeTab`, and the manifest declares `data_collection_permissions: ["none"]`.
 
 ### Possible future enhancements
-- An advanced **also block logins** (`get()`) toggle — `interceptor.js` is structured to extend.
 - Per-site *block once / always* memory, a block history view, allowlist import/export, localization.
 
 ## Testing — BDD (red → green → refactor)
@@ -68,8 +69,9 @@ npm run test:e2e   # E2E features    — real headless Firefox via web-ext + Sel
 - Unit specs: [test/unit/features/interceptor.feature](test/unit/features/interceptor.feature)
 - E2E specs: [test/e2e/features/block.feature](test/e2e/features/block.feature)
 
-**E2E notes:** the harness packages the add-on, serves a fixture over `http://localhost` (a WebAuthn
-secure context), launches headless Firefox, and installs the add-on temporarily. It sets
+**E2E notes:** scenarios cover registration blocked, login blocked by default, and an allowlisted
+site letting both through. The harness packages the add-on, serves a fixture over `http://localhost`
+(a WebAuthn secure context), launches headless Firefox, and installs the add-on temporarily. It sets
 `security.webauth.webauthn_enable_softtoken=true` / `..._enable_usbtoken=false` so any *passthrough*
 `create()`/`get()` resolves against Firefox's internal software token and **never triggers the real
 OS (Windows Hello / platform) passkey dialog**. `selenium-webdriver` auto-provisions geckodriver via

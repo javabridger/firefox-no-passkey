@@ -18,14 +18,14 @@
     const data = event.data;
     if (!data || data.source !== PAGE || data.type !== 'decision-request') return;
 
-    const decision = await decide(data.origin);
+    const decision = await decide(data.origin, data.operation);
     window.postMessage({ source: BRIDGE, type: 'decision-response', id: data.id, decision }, '*');
 
     if (decision === 'block') {
       browser.runtime.sendMessage({ type: 'blocked', origin: data.origin }).catch(() => {});
       const { showToast = true } = await getSettings(['showToast']);
       if (showToast && isTopFrame) {
-        showBlockedToast(data.origin);
+        showBlockedToast(data.origin, data.operation);
       }
     }
   });
@@ -38,11 +38,13 @@
     }
   }
 
-  async function decide(origin) {
-    const { enabled = true, allowlist = [] } = await getSettings(['enabled', 'allowlist']);
-    if (!enabled) return 'allow';
+  async function decide(origin, operation) {
+    const { blockCreate = true, blockGet = true, allowlist = [] } = await getSettings([
+      'blockCreate', 'blockGet', 'allowlist',
+    ]);
     if (allowlist.includes(origin)) return 'allow';
-    return 'block';
+    const shouldBlock = operation === 'get' ? blockGet : blockCreate;
+    return shouldBlock ? 'block' : 'allow';
   }
 
   async function allowSite(origin) {
@@ -59,7 +61,8 @@
   }
 
   let toastHost;
-  function showBlockedToast(origin) {
+  function showBlockedToast(origin, operation) {
+    const what = operation === 'get' ? 'login' : 'registration';
     if (toastHost) toastHost.remove();
     toastHost = document.createElement('div');
     toastHost.setAttribute('data-nopasskey-toast', '');
@@ -86,7 +89,7 @@
 
     const msg = document.createElement('p');
     msg.className = 'msg';
-    msg.append('Blocked a passkey registration on ');
+    msg.append(`Blocked a passkey ${what} on `);
     const originEl = document.createElement('span');
     originEl.className = 'origin';
     originEl.textContent = origin;

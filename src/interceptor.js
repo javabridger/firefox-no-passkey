@@ -2,9 +2,9 @@
  * NoPasskey core interceptor.
  *
  * Pure, environment-agnostic logic that wraps a CredentialsContainer's create()
- * method. It is deliberately free of any WebExtension or browser-only globals so
- * it can be unit-tested in Node and reused unchanged inside the MAIN-world content
- * script (see inject-main.js).
+ * and get() methods. It is deliberately free of any WebExtension or browser-only
+ * globals so it can be unit-tested in Node and reused unchanged inside the
+ * MAIN-world content script (see inject-main.js).
  *
  * Loaded two ways:
  *   - Node (tests):      const interceptor = require('./interceptor.js')
@@ -20,18 +20,17 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  // A create() call is a passkey registration iff it carries a publicKey option.
-  function isPasskeyCreate(options) {
+  // Both create() (registration) and get() (login) are passkey requests iff they
+  // carry a publicKey option.
+  function isPasskeyRequest(options) {
     return !!(options && typeof options === 'object' && options.publicKey);
   }
 
   // Reject the same way a user-cancelled passkey dialog does, so relying parties
   // fall back to their password/2FA flow.
-  function blockedError() {
-    return new DOMException(
-      'Passkey registration blocked by NoPasskey',
-      'NotAllowedError'
-    );
+  function blockedError(operation) {
+    const what = operation === 'get' ? 'login' : 'registration';
+    return new DOMException(`Passkey ${what} blocked by NoPasskey`, 'NotAllowedError');
   }
 
   function withTimeout(promise, ms) {
@@ -44,43 +43,53 @@
     });
   }
 
-  /*
-   * Wrap credentials.create(). For passkey registrations, ask requestDecision()
-   * (which resolves to 'allow' or 'block') and either block or delegate to the
-   * native create(). Anything else - including credentials.get() logins - is left
-   * completely untouched. Returns an uninstall function.
-   */
-  function installCreateInterceptor({ credentials, requestDecision, timeoutMs = 2000 }) {
-    const originalCreate = credentials.create.bind(credentials);
+  // Wrap a single CredentialsContainer method. Passkey requests are referred to
+  // requestDecision(operation) -> 'allow' | 'block'; everything else (and any
+  // bridge failure) delegates straight to the native method. Returns an uninstaller.
+  function wrapMethod(credentials, method, operation, requestDecision, timeoutMs) {
+    const original = credentials[method].bind(credentials);
 
-    async function create(options) {
-      if (!isPasskeyCreate(options)) {
-        return originalCreate(options);
+    async function wrapped(options) {
+      if (!isPasskeyRequest(options)) {
+        return original(options);
       }
-
       let decision;
       try {
-        decision = await withTimeout(requestDecision(), timeoutMs);
+        decision = await withTimeout(requestDecision(operation), timeoutMs);
       } catch (_err) {
-        // Fail open: a hung/broken bridge must never break a real login.
-        return originalCreate(options);
+        // Fail open: a hung/broken bridge must never lock the user out.
+        return original(options);
       }
-
       if (decision === 'block') {
-        throw blockedError();
+        throw blockedError(operation);
       }
-      return originalCreate(options);
+      return original(options);
     }
 
     // Masquerade as the native method (name/length) to avoid trivial detection.
-    Object.defineProperty(create, 'name', { value: 'create', configurable: true });
-    Object.defineProperty(create, 'length', { value: originalCreate.length, configurable: true });
+    Object.defineProperty(wrapped, 'name', { value: method, configurable: true });
+    Object.defineProperty(wrapped, 'length', { value: original.length, configurable: true });
 
-    credentials.create = create;
+    credentials[method] = wrapped;
     return function uninstall() {
-      credentials.create = originalCreate;
+      credentials[method] = original;
     };
   }
 
-  return { isPasskeyCreate, installCreateInterceptor };
+  /*
+   * Wrap both create() and get(). requestDecision is called with the operation
+   * ('create' | 'get') so the caller can apply per-operation policy. Returns an
+   * uninstall function that restores both native methods.
+   */
+  function installInterceptor({ credentials, requestDecision, timeoutMs = 2000 }) {
+    const uninstallers = [
+      wrapMethod(credentials, 'create', 'create', requestDecision, timeoutMs),
+      wrapMethod(credentials, 'get', 'get', requestDecision, timeoutMs),
+    ];
+    return function uninstall() {
+      uninstallers.forEach((fn) => fn());
+    };
+  }
+
+  return { isPasskeyRequest, installInterceptor };
 });

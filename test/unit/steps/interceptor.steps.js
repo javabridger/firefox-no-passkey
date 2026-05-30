@@ -3,56 +3,65 @@ const { Given, When, Then, Before } = require('@cucumber/cucumber');
 const interceptor = require('../../../src/interceptor.js');
 
 Before(function () {
-  this.originalCalls = 0;
-  this.originalCredential = { id: 'original-credential' };
-
-  // A fake CredentialsContainer that records how often create/get are invoked.
   const self = this;
-  this.credentials = {
-    create() {
-      self.originalCalls += 1;
-      return Promise.resolve(self.originalCredential);
-    },
-    get() {
-      return Promise.resolve({ id: 'login-assertion' });
-    },
-  };
-  this.originalGet = this.credentials.get;
-
-  // requestDecision is whatever the scenario configures; default consulted=false.
+  this.originalCalls = { create: 0, get: 0 };
+  this.originalCredential = { id: 'original-credential' };
+  this.decisions = { create: 'allow', get: 'allow' };
   this.bridgeConsulted = false;
-  this.requestDecision = () => {
+  this.askedOperations = [];
+
+  function originalImpl(name) {
+    return function () {
+      self.originalCalls[name] += 1;
+      return Promise.resolve(self.originalCredential);
+    };
+  }
+  this.credentials = { create: originalImpl('create'), get: originalImpl('get') };
+
+  this.requestDecision = (operation) => {
     self.bridgeConsulted = true;
-    return Promise.resolve('allow');
+    self.askedOperations.push(operation);
+    return Promise.resolve(self.decisions[operation]);
   };
 });
 
 function install(world) {
-  interceptor.installCreateInterceptor({
+  interceptor.installInterceptor({
     credentials: world.credentials,
-    requestDecision: () => world.requestDecision(),
+    requestDecision: (operation) => world.requestDecision(operation),
     timeoutMs: world.timeoutMs ?? 2000,
   });
 }
 
+async function callWithPublicKey(world, op) {
+  install(world);
+  try {
+    world.result = await world.credentials[op]({ publicKey: { challenge: new Uint8Array([1]) } });
+    world.error = null;
+  } catch (e) {
+    world.error = e;
+  }
+}
+
 Given('a fake credentials container', function () {
-  // Built in the Before hook; this step documents the precondition.
   assert.equal(typeof this.credentials.create, 'function');
+  assert.equal(typeof this.credentials.get, 'function');
 });
 
-Given('the bridge decides to {string}', function (decision) {
-  const self = this;
-  this.requestDecision = () => {
-    self.bridgeConsulted = true;
-    return Promise.resolve(decision);
-  };
+Given('the bridge blocks {string}', function (op) {
+  this.decisions[op] = 'block';
+});
+
+Given('the bridge allows everything', function () {
+  this.decisions = { create: 'allow', get: 'allow' };
 });
 
 Given('the bridge never responds', function () {
   this.timeoutMs = 50;
   const self = this;
-  this.requestDecision = () => {
+  this.requestDecision = (operation) => {
     self.bridgeConsulted = true;
+    self.askedOperations.push(operation);
     return new Promise(() => {}); // never settles
   };
 });
@@ -61,36 +70,30 @@ When('the interceptor is installed', function () {
   install(this);
 });
 
-When('the page calls create with a publicKey option', async function () {
-  install(this);
-  try {
-    this.result = await this.credentials.create({ publicKey: { challenge: new Uint8Array([1]) } });
-    this.error = null;
-  } catch (e) {
-    this.error = e;
-  }
+When('the page calls {string} with a publicKey option', async function (op) {
+  await callWithPublicKey(this, op);
 });
 
-When('the page calls create without a publicKey option', async function () {
+When('the page calls {string} without a publicKey option', async function (op) {
   install(this);
-  this.result = await this.credentials.create({ password: { id: 'x', password: 'y' } });
+  this.result = await this.credentials[op]({ password: { id: 'x', password: 'y' } });
   this.error = null;
 });
 
-Then('create rejects with a {string}', function (name) {
-  assert.ok(this.error, 'expected create() to reject');
+Then('the call rejects with a {string}', function (name) {
+  assert.ok(this.error, 'expected the call to reject');
   assert.equal(this.error.name, name);
 });
 
-Then('the original create is never called', function () {
-  assert.equal(this.originalCalls, 0);
+Then('the original {string} is never called', function (op) {
+  assert.equal(this.originalCalls[op], 0);
 });
 
-Then('the original create is called once', function () {
-  assert.equal(this.originalCalls, 1);
+Then('the original {string} is called once', function (op) {
+  assert.equal(this.originalCalls[op], 1);
 });
 
-Then('create resolves with the original credential', function () {
+Then('the call resolves with the original credential', function () {
   assert.equal(this.error, null);
   assert.equal(this.result, this.originalCredential);
 });
@@ -99,10 +102,10 @@ Then('the bridge is never consulted', function () {
   assert.equal(this.bridgeConsulted, false);
 });
 
-Then('credentials.get is the original function', function () {
-  assert.equal(this.credentials.get, this.originalGet);
+Then('the bridge was asked about {string}', function (op) {
+  assert.ok(this.askedOperations.includes(op), `bridge was asked about: ${this.askedOperations}`);
 });
 
-Then('credentials.create is named {string}', function (name) {
-  assert.equal(this.credentials.create.name, name);
+Then('{string} is named {string}', function (op, name) {
+  assert.equal(this.credentials[op].name, name);
 });

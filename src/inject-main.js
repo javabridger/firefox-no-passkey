@@ -31,18 +31,18 @@
     }
   });
 
-  function requestDecision() {
+  function requestDecision(operation) {
     return new Promise((resolve) => {
       const id = ++nextId;
       pending.set(id, resolve);
       window.postMessage(
-        { source: PAGE, type: 'decision-request', id, origin: location.origin },
+        { source: PAGE, type: 'decision-request', id, origin: location.origin, operation },
         '*'
       );
     });
   }
 
-  interceptor.installCreateInterceptor({
+  interceptor.installInterceptor({
     credentials: navigator.credentials,
     requestDecision,
     timeoutMs: 2000,
