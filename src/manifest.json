@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "NoPasskey",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Blocks new passkey (WebAuthn) registration by default, with a per-site allowlist. Logging in with existing passkeys is left alone.",
   "browser_specific_settings": {
     "gecko": {
