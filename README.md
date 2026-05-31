@@ -85,6 +85,15 @@ Zero telemetry, zero network requests. See [PRIVACY.md](PRIVACY.md) for the full
 
 MIT — see [LICENSE](LICENSE).
 
+## Releasing a new version
+
+1. Bump the `version` field in [src/manifest.json](src/manifest.json) (e.g. `0.1.0` → `0.1.1`)
+2. Commit and push to main: `git commit -am "v0.1.1" && git push`
+3. Run e2e tests and any manual smoke tests
+4. Go to **Actions → Release → Run workflow** on GitHub
+5. Approve the deployment when prompted — add a note confirming tests passed
+6. GitHub creates the release and attaches the signed zip automatically
+
 ## Build, lint & publish to AMO
 
 ```bash
