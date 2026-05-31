@@ -77,6 +77,14 @@ site letting both through. The harness packages the add-on, serves a fixture ove
 OS (Windows Hello / platform) passkey dialog**. `selenium-webdriver` auto-provisions geckodriver via
 Selenium Manager; set `FIREFOX_BIN` if Firefox isn't at the default Windows path.
 
+## Privacy
+
+Zero telemetry, zero network requests. See [PRIVACY.md](PRIVACY.md) for the full policy.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
 ## Build, lint & publish to AMO
 
 ```bash

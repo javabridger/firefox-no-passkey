@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  approve-and-release:
+    needs: unit-test
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Read version from manifest
+        id: version
+        run: echo "version=$(node -p "require('./src/manifest.json').version")" >> $GITHUB_OUTPUT
+      - name: Create GitHub release
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            web-ext-artifacts/*.zip \
+            --title "v${{ steps.version.outputs.version }}" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
